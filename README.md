@@ -3,7 +3,8 @@ Beats2
 
 Intro
 ------
-**Beats2** is a cross-platform, multi-style rhythm game designed for **touch-screen devices**. See http://beats2.net for current progress and updates. 
+**Beats2** is a cross-platform, multi-style rhythm game designed for **touch-screen devices**.
+See http://beats2.net for current progress and updates. 
 
 Styles
 ------
