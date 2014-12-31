@@ -4,6 +4,7 @@ Beats2
 Intro
 ------
 **Beats2** is a cross-platform, multi-style rhythm game designed for **touch-screen devices**.
+
 See http://beats2.net for current progress and updates. 
 
 Styles
@@ -30,7 +31,7 @@ Target Platforms
 
 Code
 ------
-- **/beats** - currently active development branch
+- **/beats2** - currently active development branch
 - **/beats2n** - test demo made using NGUI library, for reference purposes only
 - **/beats2td** - test demo made using tk2d library, for reference purposes only
 

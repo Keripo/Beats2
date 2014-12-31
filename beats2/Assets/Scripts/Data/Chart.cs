@@ -9,10 +9,11 @@ using System.Collections.Generic;
 
 namespace Beats2.Data
 {
-    public class Chart
-    {
-        public ChartInfo info;
-        public List<Note> notes;
-        public List<Event> events;
-    }
+
+	public class Chart
+	{
+		public ChartInfo info = new ChartInfo();
+		public List<Note> notes = new List<Note>();
+		public List<Event> events = new List<Event>();
+	}
 }

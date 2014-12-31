@@ -9,18 +9,19 @@ using System.Collections.Generic;
 
 namespace Beats2.Data
 {
-    // Simfile data structure layout
-    // Simfile
-    // - Metadata
-    // - Lyrics
-    // - Charts
-    //   - ChartInfo
-    //   - Events
-    //   - Notes
-    public class Simfile
-    {
-        public Metadata metadata;
-        public List<Lyric> lyrics;
-        public List<Chart> charts;
-    }
+
+	// Simfile data structure layout
+	// Simfile
+	// - Metadata
+	// - Lyrics
+	// - Charts
+	//   - ChartInfo
+	//   - Events
+	//   - Notes
+	public class Simfile
+	{
+		public Metadata metadata = new Metadata();
+		public List<Lyric> lyrics = new List<Lyric>();
+		public List<Chart> charts = new List<Chart>();
+	}
 }

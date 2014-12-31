@@ -9,17 +9,17 @@ using System.Collections.Generic;
 
 namespace Beats2.Data
 {
-    public class Lyric
-    {
-        public string language;
-        public string filePath;
-        public List<LyricLine> lines;
-    }
+	public class Lyric
+	{
+		public string language;
+		public string filePath;
+		public List<LyricLine> lines = new List<LyricLine>();
+	}
 
-    public struct LyricLine
-    {
-        public int colour;
-        public double time;
-        public string line;
-    }
+	public struct LyricLine
+	{
+		public int colour;
+		public double time;
+		public string line;
+	}
 }
