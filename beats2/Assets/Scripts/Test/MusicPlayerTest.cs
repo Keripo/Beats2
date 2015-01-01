@@ -14,22 +14,30 @@ namespace Beats2.Audio
 	public class MusicPlayerTest : MonoBehaviour
 	{
 		private const string TAG = "MusicPlayerTest";
+		
+		public string audioFilePath;
 
 		public Text togglePlaybackButtonText;
 		public Text playbackStateText;
-		public AudioSource audioSource;
 		public int syncFrameCount;
 
 		public Text logHistoryText;
 		public int logHistorySize;
 
 		private MusicPlayer _player;
-		
-		void Start()
+
+		void Awake()
 		{
-			_player = new MusicPlayer(audioSource, syncFrameCount);
 			Logger.SetLogHistory(true);
 			Logger.SetLogHistorySize(logHistorySize);
+		}
+
+		void Start()
+		{
+			AudioSource audioSource = gameObject.AddComponent<AudioSource>();
+			AudioClip audioClip = FileLoader.LoadAudioClip(FileLoader.GetDataPath(audioFilePath), false);
+			audioSource.clip = audioClip;
+			_player = new MusicPlayer(audioSource, syncFrameCount);
 		}
 	
 		void Update()
