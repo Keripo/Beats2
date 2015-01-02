@@ -6,8 +6,10 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
+using System.Collections;
 
 namespace Beats2
 {
@@ -84,7 +86,35 @@ namespace Beats2
 			}
 			return logHistory.ToString();
 		}
-		
+
+		public static string DumpFields(object obj, int indentCount = 0)
+		{
+			string indent = new string('\t', indentCount);
+			string indentInner = new string('\t', indentCount + 1);
+			StringBuilder properties = new StringBuilder();
+
+			properties.AppendLine(indent + "{");
+
+			// Use reflection to get list of properties and their values
+			Type type = obj.GetType();
+			foreach (FieldInfo field in type.GetFields()) {
+				string name = field.Name;
+				object value = field.GetValue(obj);
+				if (value is ICollection) {
+					// Recursively print inner objects
+					properties.AppendLine(string.Format("{0}{1} =", indentInner, name));
+					foreach (ICollection item in ((ICollection)value)) {
+						properties.AppendLine(DumpFields(item, indentCount + 1));
+					}
+				} else {
+					properties.AppendLine(string.Format("{0}{1} = {2}", indentInner, name, value));
+				}
+			}
+			properties.AppendLine(indent + "}");
+
+			return properties.ToString();
+		}
+
 		private static string FormatLogString(string type, string tag, string format, params object[] args)
 		{
 			return String.Format("{0}|{1}: {2}", type, tag, String.Format(format, args));
