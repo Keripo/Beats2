@@ -20,6 +20,20 @@ namespace Beats2.Parser
 	{
 		private const string TAG = "ParserBase";
 
+		protected FileInfo _inputFile;
+		protected DirectoryInfo _parentDirectory;
+		protected Simfile _simfile = new Simfile();
+
+		protected ParserBase(FileInfo inputFile, DirectoryInfo parentDirectory)
+		{
+			_inputFile = inputFile;
+			_parentDirectory = parentDirectory;
+		}
+
+		public abstract void LoadMetadata();
+
+		public abstract void LoadCharts();
+
 		protected int ParseInt(string value)
 		{
 			int parsed;
@@ -79,28 +93,28 @@ namespace Beats2.Parser
 			}
 		}
 
-		protected string FindFile(string filename, string[] extensions, bool restrictExtensions, DirectoryInfo parentDirectory)
+		protected string FindFile(string filename, string[] extensions, bool restrictExtensions)
 		{
 			string path = FileLoader.FindFile(filename, extensions, restrictExtensions);
 			if (string.IsNullOrEmpty(path)) {
-				path = FileLoader.FindFile(Path.Combine(filename, parentDirectory.FullName), extensions, restrictExtensions);
+				path = FileLoader.FindFile(Path.Combine(filename, _parentDirectory.FullName), extensions, restrictExtensions);
 			}
 			return path;
 		}
 		
-		protected string FindImage(string filename, DirectoryInfo parentDirectory)
+		protected string FindImage(string filename)
 		{
-			return FindFile(filename, FileLoader.IMAGE_EXTENSIONS, false, parentDirectory);
+			return FindFile(filename, FileLoader.IMAGE_EXTENSIONS, false);
 		}
 		
-		protected string FindLyrics(string filename, DirectoryInfo parentDirectory)
+		protected string FindLyrics(string filename)
 		{
-			return FindFile(filename, FileLoader.LYRICS_EXTENSIONS, false, parentDirectory);
+			return FindFile(filename, FileLoader.LYRICS_EXTENSIONS, false);
 		}
 		
-		protected string FindAudio(string filename, DirectoryInfo parentDirectory)
+		protected string FindAudio(string filename)
 		{
-			return FindFile(filename, FileLoader.AUDIO_EXTENSIONS, true, parentDirectory);
+			return FindFile(filename, FileLoader.AUDIO_EXTENSIONS, true);
 		}
 	}
 }

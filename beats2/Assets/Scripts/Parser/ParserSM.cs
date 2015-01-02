@@ -19,22 +19,18 @@ namespace Beats2.Parser
 	/// </summary>
 	public class ParserSM : ParserBase
 	{
-		private const string TAG = "SMParser";
+		private const string TAG = "ParserSM";
 
-		private FileInfo _inputFile;
-		private DirectoryInfo _parentDirectory;
-		private Simfile _simfile = new Simfile();
 		private List<Event> _events = new List<Event>();
 		private List<string> _notesData = new List<string>();
 		private bool _isMetadataLoaded = false;
 
 		public ParserSM(FileInfo inputFile, DirectoryInfo parentDirectory)
+			: base(inputFile, parentDirectory)
 		{
-			_inputFile = inputFile;
-			_parentDirectory = parentDirectory;
 		}
 
-		public void LoadMetadata()
+		public override void LoadMetadata()
 		{
 			if (!_inputFile.Exists) {
 				throw new ParserException(string.Format("Input file does not exist: {0}", _inputFile.FullName));
@@ -72,7 +68,7 @@ namespace Beats2.Parser
 			}
 		}
 
-		public void LoadCharts()
+		public override void LoadCharts()
 		{
 			if (!_isMetadataLoaded) {
 				throw new ParserException("Metadata must be loaded first");
@@ -112,24 +108,24 @@ namespace Beats2.Parser
 					_simfile.metadata.infoCredits = value;
 					break;
 				case "BANNER":
-					_simfile.metadata.graphicBanner = FindImage(value, _parentDirectory);
+					_simfile.metadata.graphicBanner = FindImage(value);
 					break;
 				case "BACKGROUND":
-					_simfile.metadata.graphicBackground = FindImage(value, _parentDirectory);
+					_simfile.metadata.graphicBackground = FindImage(value);
 					break;
 				case "CDTITLE":
 				case "JACKET":
 				case "CDIMAGE":
 				case "DISCIMAGE":
 					if (_simfile.metadata.graphicCover == null) {
-						_simfile.metadata.graphicCover = FindImage(value, _parentDirectory);
+						_simfile.metadata.graphicCover = FindImage(value);
 					}
 					break;
 				case "LYRICSPATH":
 					ParseLyricsPath(value);
 					break;
 				case "MUSIC":
-					_simfile.metadata.musicPath = FindAudio(value, _parentDirectory);
+					_simfile.metadata.musicPath = FindAudio(value);
 					break;
 				case "OFFSET":
 					_simfile.metadata.musicOffset = ParseFloat(value);
@@ -196,7 +192,7 @@ namespace Beats2.Parser
 
 		private void ParseLyricsPath(string value)
 		{
-			string lyricPath = FindLyrics(value, _parentDirectory);
+			string lyricPath = FindLyrics(value);
 			if (string.IsNullOrEmpty(lyricPath)) {
 				Logger.Warn(TAG, "Unable to find lyrics file: {0}", lyricPath);
 			} else {
@@ -254,7 +250,7 @@ namespace Beats2.Parser
 					// See http://www.stepmania.com/forums/general-stepmania/show/1393#post3757
 					filename = filename.Substring(0, filename.IndexOf('='));
 				}
-				string filePath = FindImage(filename, _parentDirectory);
+				string filePath = FindImage(filename);
 				if (beat < 0f) {
 					Logger.Warn(TAG, "Negative beat value events ignored");
 				} else if (string.IsNullOrEmpty(filename)) {
