@@ -10,8 +10,8 @@ namespace Beats2.Data
 	public class Event
 	{
 		public EventType type;
-		public int beat;
-		public double time;
+		public float beat;
+		public float time;
 		public object value;
 	}
 

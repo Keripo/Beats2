@@ -7,7 +7,6 @@
 
 using System.Collections.Generic;
 using Beats2.Data;
-using System.IO;
 using System;
 
 namespace Beats2.Parser
@@ -19,29 +18,52 @@ namespace Beats2.Parser
 	public abstract class ParserBase
 	{
 		private const string TAG = "ParserBase";
+		
+		public Simfile simfile;
 
-		protected FileInfo _inputFile;
-		protected DirectoryInfo _parentDirectory;
-		protected Simfile _simfile = new Simfile();
+		protected string _simfilePath;
+		protected string _parentFolderPath;
+		protected string _rawData;
 
-		protected ParserBase(FileInfo inputFile, DirectoryInfo parentDirectory)
+		public static ParserBase GetParser(string simfilePath)
 		{
-			_inputFile = inputFile;
-			_parentDirectory = parentDirectory;
+			if (!FileLoader.FileExists(simfilePath)) {
+				throw new ParserException(string.Format("Simfile does not exist: {0}", simfilePath));
+			}
+
+			string extension = FileLoader.GetFileExtension(simfilePath).ToLower();
+			switch (extension) {
+				case ".sm":
+				case ".ssc":
+					return new ParserSM(simfilePath);
+				default:
+					throw new ParserException(string.Format("Unable to find parser for format: {0}", extension));
+			}
+		}
+
+		protected ParserBase(string simfilePath)
+		{
+			_simfilePath = simfilePath;
+			_parentFolderPath = FileLoader.GetParentFolder(simfilePath);
+			simfile = new Simfile();
+		}
+
+		public string LoadData(bool reload = false)
+		{
+			if (_rawData == null || reload) {
+				_rawData = FileLoader.LoadText(_simfilePath);
+				if (string.IsNullOrEmpty(_rawData)) {
+					throw new ParserException("Failed to load raw data");
+				}
+			}
+			return _rawData;
 		}
 
 		public abstract void LoadMetadata();
 
-		public abstract void LoadCharts();
+		public abstract void LoadLyrics();
 
-		protected int ParseInt(string value)
-		{
-			int parsed;
-			if (!int.TryParse(value, out parsed)) {
-				Logger.Warn(TAG, "Unable to parse int: {0}", value);
-			}
-			return parsed;
-		}
+		public abstract void LoadCharts();
 
 		protected float ParseFloat(string value)
 		{
@@ -95,9 +117,15 @@ namespace Beats2.Parser
 
 		protected string FindFile(string filename, string[] extensions, bool restrictExtensions)
 		{
-			string path = FileLoader.FindFile(filename, extensions, restrictExtensions);
+			if (string.IsNullOrEmpty(filename)) {
+				return null;
+			}
+
+			string path = FileLoader.FindFile(
+				FileLoader.GetPath(filename, _parentFolderPath), extensions, restrictExtensions);
 			if (string.IsNullOrEmpty(path)) {
-				path = FileLoader.FindFile(Path.Combine(filename, _parentDirectory.FullName), extensions, restrictExtensions);
+				// Most simfiles use relative paths, but check absolute in case
+				path = FileLoader.FindFile(filename, extensions, restrictExtensions);
 			}
 			return path;
 		}

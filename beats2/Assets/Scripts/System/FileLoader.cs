@@ -67,11 +67,11 @@ namespace Beats2
 			}
 
 			string foundPath = null;
-			string currentExtension = Path.GetExtension(path);
+			string currentExtension = GetFileExtension(path);
 
 			// Check original path
 			if (!restrictExtensions || currentExtension == null) {
-				if (File.Exists(path)) {
+				if (FileExists(path)) {
 					foundPath = path;
 				}
 			} else {
@@ -79,7 +79,7 @@ namespace Beats2
 				if (currentExtension != null) {
 					foreach (string extension in extensions) {
 						if (String.Equals(currentExtension, extension, StringComparison.OrdinalIgnoreCase)) {
-							if (File.Exists(path)) {
+							if (FileExists(path)) {
 								foundPath = path;
 							}
 							break;
@@ -93,7 +93,7 @@ namespace Beats2
 				string checkPath;
 				foreach (string extension in extensions) {
 					checkPath = path.Replace(currentExtension, extension);
-					if (File.Exists(checkPath)) {
+					if (FileExists(checkPath)) {
 						foundPath = checkPath;
 						break;
 					}
@@ -107,6 +107,21 @@ namespace Beats2
 				Logger.Error(TAG, "Unable to find file: {0}", path);
 			}
 			return foundPath;
+		}
+
+		public static string GetPath(string filename, string parentFolderPath)
+		{
+			return FixPath(parentFolderPath) + Path.DirectorySeparatorChar + filename.TrimStart(Path.DirectorySeparatorChar);
+		}
+		
+		public static bool FileExists(string path)
+		{
+			return File.Exists(FixPath(path));
+		}
+		
+		public static string GetFileExtension(string path)
+		{
+			return Path.GetExtension(path);
 		}
 
 		public static string GetParentFolder(string path)
@@ -196,17 +211,18 @@ namespace Beats2
 
 		private static string GetWwwPath(string path)
 		{
-			// I have no idea why the alt separator has to be used here,
-			// but otherwise, things break. I blame Unity.
-			return String.Format("{0}{1}",
-				FILE_PROTOCOL,
-				path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-			);
+			// URLs only support '/' it seems
+			return String.Format("{0}{1}", FILE_PROTOCOL, path.Replace('\\', '/'));
 		}
 
 		public static string GetDataPath(string path)
 		{
-			return Path.Combine(GetDataPath(), path);
+			return Path.Combine(GetDataPath(), FixPath(path));
+		}
+
+		public static string FixPath(string path)
+		{
+			return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
 		}
 		
 		private static string GetDataPath()

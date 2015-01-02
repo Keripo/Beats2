@@ -55,8 +55,8 @@ namespace Beats2.Data
 		public int y;
 		public bool coord;
 
-		public int beat;
-		public double time;
+		public float beat;
+		public float time;
 
 		public bool hit;
 	}
