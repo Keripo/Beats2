@@ -30,7 +30,7 @@ namespace Beats2.Data
 	public enum EventType
 	{
 		Bpm,
-		Stop, // Note: Delays and Warps not intented to be implemented
+		Stop,
 		Label,
 		BgChange
 	}

@@ -18,6 +18,7 @@ namespace Beats2
 		private const string TAG = "FileLoader";
 		private const string BEATS2_DIR = "Beats2";
 		private const string FILE_PROTOCOL = "file://";
+
 		public static string[] AUDIO_EXTENSIONS = {
 		// TODO: Temporary fix til I use an FMOD plugin for LoadAudio
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -37,6 +38,8 @@ namespace Beats2
 		};
 
 #if UNITY_ANDROID && !UNITY_EDITOR
+		// TODO: Figure out better way that is compatible with
+		// Android API 21 (Android 5.0 Lollipop)
 		private static string[] SDCARD_PATHS = {
 			"/mnt/sdcard/external_sd",
 			"/mnt/sdcard/sd",
@@ -54,47 +57,56 @@ namespace Beats2
 #endif
 
 		private static string _dataPath;
-		
-		public static string FindFile(string path, string[] extensions)
+
+		public static string FindFile(string path, string[] extensions, bool restrictExtensions = false)
 		{
 			Logger.Debug(TAG, "Searching for file: {0}", path);
-			
-			// Check for file extension
-			int index = path.LastIndexOf('.');
-			if (index > 0) {
-				
-				// Check with current file extension
-				string currentExtension = path.Substring(index + 1).ToLower();
-				foreach (string extension in extensions) {
-					if (String.Equals(currentExtension, extension, StringComparison.OrdinalIgnoreCase)) {
-						if (File.Exists(path)) {
-							Logger.Debug(TAG, "Found file: {0}", path);
-							return path;
-						} else {
+			if (string.IsNullOrEmpty(path)) {
+				Logger.Warn(TAG, "Unable to search with an empty path");
+				return null;
+			}
+
+			string foundPath = null;
+			string currentExtension = Path.GetExtension(path);
+
+			// Check original path
+			if (!restrictExtensions || currentExtension == null) {
+				if (File.Exists(path)) {
+					foundPath = path;
+				}
+			} else {
+				// Check only if current extension is in extension list
+				if (currentExtension != null) {
+					foreach (string extension in extensions) {
+						if (String.Equals(currentExtension, extension, StringComparison.OrdinalIgnoreCase)) {
+							if (File.Exists(path)) {
+								foundPath = path;
+							}
 							break;
 						}
 					}
 				}
-				
-				// Check against other supported file extensions
+			}
+
+			// Check with different extensions
+			if (foundPath == null && currentExtension != null) {
 				string checkPath;
 				foreach (string extension in extensions) {
-					checkPath = path.Substring(0, index) + extension;
+					checkPath = path.Replace(currentExtension, extension);
 					if (File.Exists(checkPath)) {
-						Logger.Debug(TAG, "Found file: {0}", checkPath);
-						return checkPath;
+						foundPath = checkPath;
+						break;
 					}
 				}
 			}
-			
-			// Last try
-			if (File.Exists(path)) {
-				Logger.Debug(TAG, "Found file: {0}", path);
-				return path;
+
+			// Log and return result
+			if (foundPath != null) {
+				Logger.Debug(TAG, "Found file: {0}", foundPath);
 			} else {
-				Logger.Error(TAG, "Could not find file: {0}", path);
-				return null;
+				Logger.Error(TAG, "Unable to find file: {0}", path);
 			}
+			return foundPath;
 		}
 
 		public static string GetParentFolder(string path)
@@ -107,12 +119,12 @@ namespace Beats2
 			return null;
 		}
 		
-		public static AudioClip LoadAudioClip(string path, bool stream)
+		public static AudioClip LoadAudioClip(string path, bool stream = false)
 		{
 			Logger.Debug(TAG, "Loading audio file: {0}", path);
 			
 			// Get file path
-			string filePath = FindFile(path, AUDIO_EXTENSIONS);
+			string filePath = FindFile(path, AUDIO_EXTENSIONS, true);
 			if (filePath == null) {
 				Logger.Error(TAG, "Unable to find audio file: {0}", path);
 				return null;
@@ -120,21 +132,20 @@ namespace Beats2
 			
 			// Load url
 			string url = GetWwwPath(filePath);
-			WWW www = new WWW(url);
-			
-			// Load audio clip
-			AudioClip clip = www.GetAudioClip(false, stream); // No 3D audio
-			while (!clip.isReadyToPlay) {
-				// Wait for buffer
+			using (WWW www = new WWW(url)) {
+				// Load audio clip
+				AudioClip clip = www.GetAudioClip(false, stream); // No 3D audio
+				while (!clip.isReadyToPlay) {
+					// Wait for buffer
+				}
+				if (clip == null) {
+					Logger.Error(TAG, "Failed to load audio file: {0}", path);
+				}
+				return clip;
 			}
-			//www.Dispose();
-			if (clip == null) {
-				Logger.Error(TAG, "Failed to load audio file: {0}", path);
-			}
-			return clip;
 		}
 		
-		public static Texture2D LoadTexture(string path, bool repeat)
+		public static Texture2D LoadTexture(string path, bool repeat = false)
 		{
 			Logger.Debug(TAG, "Loading image file: {0}", path);
 			
@@ -147,20 +158,20 @@ namespace Beats2
 			
 			// Load url
 			string url = GetWwwPath(filePath);
-			WWW www = new WWW(url);
-			while (!www.isDone) {
-				// Wait until file is downloaded
-			}
+			using (WWW www = new WWW(url)) {
+				while (!www.isDone) {
+					// Wait until file is downloaded
+				}
 			
-			// Load texture
-			Texture2D texture = www.texture;
-			texture.wrapMode = (repeat) ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
-			texture.Compress(true); // High quality compression
-			www.Dispose();
-			if (texture == null) {
-				Logger.Error(TAG, "Failed to load texture file: {0}", path);
+				// Load texture
+				Texture2D texture = www.texture;
+				texture.wrapMode = (repeat) ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+				texture.Compress(true); // High quality compression
+				if (texture == null) {
+					Logger.Error(TAG, "Failed to load texture file: {0}", path);
+				}
+				return texture;
 			}
-			return texture;
 		}
 		
 		public static string LoadText(string path)
@@ -169,25 +180,20 @@ namespace Beats2
 			
 			// Load url
 			string url = GetWwwPath(path);
-			WWW www = new WWW(url);
-			while (!www.isDone) {
-				// Wait until file is downloaded
-			}
+			using (WWW www = new WWW(url)) {
+				while (!www.isDone) {
+					// Wait until file is downloaded
+				}
 
-			// Load text
-			String text = www.text;
-			www.Dispose();
-			if (text == null) {
-				Logger.Error(TAG, "Failed to load text file: {0}", path);
+				// Load text
+				String text = www.text;
+				if (text == null) {
+					Logger.Error(TAG, "Failed to load text file: {0}", path);
+				}
+				return text;
 			}
-			return text;
 		}
 
-		public static string GetDataPath(string path)
-		{
-			return Path.Combine(GetDataPath(), path);
-		}
-		
 		private static string GetWwwPath(string path)
 		{
 			// I have no idea why the alt separator has to be used here,
@@ -196,6 +202,11 @@ namespace Beats2
 				FILE_PROTOCOL,
 				path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
 			);
+		}
+
+		public static string GetDataPath(string path)
+		{
+			return Path.Combine(GetDataPath(), path);
 		}
 		
 		private static string GetDataPath()

@@ -4,6 +4,7 @@
  * The software in this package is published under the terms of the BSD-style license
  * a copy of which has been included with this distribution in the LICENSE file.
  */
+using System.Collections.Generic;
 
 namespace Beats2.Data
 {
@@ -35,10 +36,10 @@ namespace Beats2.Data
 		public string songReleaseYear;
         
 		public string musicPath;
-		public string musicOffset;
-		public string musicSampleStart;
-		public string musicSampleLength;
-		public string musicBpmDisplay;
+		public float musicOffset;
+		public float musicSampleStart;
+		public float musicSampleLength;
+		public List<float> musicDisplayBpm;
         
 		public string graphicBackground;
 		public string graphicBanner;
