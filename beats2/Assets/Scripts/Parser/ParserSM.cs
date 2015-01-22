@@ -8,6 +8,8 @@
 using System.Collections.Generic;
 using Beats2.Data;
 using System;
+using System.IO;
+using System.Text;
 
 namespace Beats2.Parser
 {
@@ -35,24 +37,12 @@ namespace Beats2.Parser
 				Logger.Warn(TAG, "Metadata was already previously loaded, reloading...");
 			}
 
-			// If performance becomes an issue (due to memory copying),
-			// replace String.Split with a String.indexOf implementation
-			string[] sections = LoadData().Split('#');
-			foreach (string section in sections) {
-				if (!string.IsNullOrEmpty(section)) {
-					// Clean up and ignore comment lines
-					string sectionCleaned = section.Trim();
-					int indexEnd = sectionCleaned.IndexOf(';');
-					if (indexEnd > 0) {
-						sectionCleaned = sectionCleaned.Substring(0, indexEnd);
-					}
-
-					string tag, value;
-					if (ParseSection(sectionCleaned, ":", out tag, out value) &&
-						!string.IsNullOrEmpty(tag) &&
-						!string.IsNullOrEmpty(value)) {
-						ParseTag(tag, value);
-					}
+			foreach (string section in LoadSections()) {
+				string tag, value;
+				if (ParseSection(section, ":", out tag, out value) &&
+					!string.IsNullOrEmpty(tag) &&
+					!string.IsNullOrEmpty(value)) {
+					ParseTag(tag, value);
 				}
 			}
 
@@ -75,6 +65,41 @@ namespace Beats2.Parser
 			}
 
 			// TODO: Load from _notesData, then add _events
+		}
+		
+		private List<string> LoadSections()
+		{
+			List<string> sections = new List<string>();
+			StringBuilder buffer = new StringBuilder();
+
+			using (StringReader reader = new StringReader(LoadData())) {
+				// Remove all comment lines and empty lines
+				String line;
+				while ((line = reader.ReadLine()) != null) {
+					line = line.Trim();
+					if (line.Length > 0 && !line.StartsWith("//")) {
+						buffer.Append(line);
+					}
+				}
+				
+				// If performance becomes an issue (due to memory copying),
+				// replace String.Split with a String.indexOf implementation
+				string[] sectionsRaw = buffer.ToString().Split('#');
+				foreach (string sectionRaw in sectionsRaw) {
+					if (!string.IsNullOrEmpty(sectionRaw)) {
+						string section = sectionRaw.Trim();
+						int indexEnd = section.IndexOf(';');
+						if (indexEnd > 0) {
+							section = section.Substring(0, indexEnd);
+						}
+						if (section.Length > 0) {
+							sections.Add(section);
+						}
+					}
+				}
+			}
+			
+			return sections;
 		}
 		
 		private void ParseTag(string tag, string value)
